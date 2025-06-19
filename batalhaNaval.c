@@ -2,85 +2,104 @@
 
 #define TAM 10
 #define TAM_NAVIO 3
-#define VALOR_AGUA 0
-#define VALOR_NAVIO 3
+#define AGUA 0
+#define NAVIO 3
+#define HABILIDADE 5
 
-int main() {
-    int tabuleiro[TAM][TAM];
-
-    // Inicializa o tabuleiro com água (0)
-    for (int i = 0; i < TAM; i++) {
-        for (int j = 0; j < TAM; j++) {
-            tabuleiro[i][j] = VALOR_AGUA;
-        }
-    }
-
-    // Função auxiliar: verifica se pode posicionar um navio sem sair dos limites ou sobrepor outro
-    int podePosicionar = 1;
-
-    // NAVIO 1 — HORIZONTAL (linha 2, coluna 1 a 3)
-    int linha1 = 2, coluna1 = 1;
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (tabuleiro[linha1][coluna1 + i] != VALOR_AGUA) {
-            podePosicionar = 0;
-        }
-    }
-    if (podePosicionar) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[linha1][coluna1 + i] = VALOR_NAVIO;
-        }
-    }
-
-    // NAVIO 2 — VERTICAL (linha 5 a 7, coluna 6)
-    podePosicionar = 1;
-    int linha2 = 5, coluna2 = 6;
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (tabuleiro[linha2 + i][coluna2] != VALOR_AGUA) {
-            podePosicionar = 0;
-        }
-    }
-    if (podePosicionar) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[linha2 + i][coluna2] = VALOR_NAVIO;
-        }
-    }
-
-    // NAVIO 3 — DIAGONAL PRINCIPAL (linha/coluna aumentam: 0,0 até 2,2)
-    podePosicionar = 1;
-    int linha3 = 0, coluna3 = 0;
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (tabuleiro[linha3 + i][coluna3 + i] != VALOR_AGUA) {
-            podePosicionar = 0;
-        }
-    }
-    if (podePosicionar) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[linha3 + i][coluna3 + i] = VALOR_NAVIO;
-        }
-    }
-
-    // NAVIO 4 — DIAGONAL SECUNDÁRIA (linha aumenta, coluna diminui: 0,9 até 2,7)
-    podePosicionar = 1;
-    int linha4 = 0, coluna4 = 9;
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (tabuleiro[linha4 + i][coluna4 - i] != VALOR_AGUA) {
-            podePosicionar = 0;
-        }
-    }
-    if (podePosicionar) {
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            tabuleiro[linha4 + i][coluna4 - i] = VALOR_NAVIO;
-        }
-    }
-
-    // Exibe o tabuleiro final
-    printf("TABULEIRO BATALHA NAVAL (0 = água, 3 = navio):\n\n");
+// Função para imprimir o tabuleiro com legenda
+void imprimirTabuleiro(int tabuleiro[TAM][TAM]) {
+    printf("Legenda: 0 = Água | 3 = Navio | 5 = Habilidade\n\n");
     for (int i = 0; i < TAM; i++) {
         for (int j = 0; j < TAM; j++) {
             printf("%d ", tabuleiro[i][j]);
         }
         printf("\n");
     }
+    printf("\n");
+}
+
+// Aplica uma matriz de habilidade no tabuleiro, centrada na origem
+void aplicarHabilidade(int tabuleiro[TAM][TAM], int habilidade[7][7], int origemLinha, int origemColuna, int tamanho) {
+    int offset = tamanho / 2;
+
+    for (int i = 0; i < tamanho; i++) {
+        for (int j = 0; j < tamanho; j++) {
+            if (habilidade[i][j] == 1) {
+                int linha = origemLinha - offset + i;
+                int coluna = origemColuna - offset + j;
+
+                // Verifica se está dentro dos limites do tabuleiro
+                if (linha >= 0 && linha < TAM && coluna >= 0 && coluna < TAM) {
+                    if (tabuleiro[linha][coluna] == AGUA) {
+                        tabuleiro[linha][coluna] = HABILIDADE;
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    int tabuleiro[TAM][TAM];
+
+    // Inicializa com água
+    for (int i = 0; i < TAM; i++)
+        for (int j = 0; j < TAM; j++)
+            tabuleiro[i][j] = AGUA;
+
+    // Posiciona 4 navios (2 normais + 2 diagonais) como feito antes
+    // Navio horizontal
+    for (int i = 0; i < TAM_NAVIO; i++)
+        tabuleiro[2][1 + i] = NAVIO;
+
+    // Navio vertical
+    for (int i = 0; i < TAM_NAVIO; i++)
+        tabuleiro[5 + i][6] = NAVIO;
+
+    // Diagonal principal
+    for (int i = 0; i < TAM_NAVIO; i++)
+        tabuleiro[0 + i][0 + i] = NAVIO;
+
+    // Diagonal secundária
+    for (int i = 0; i < TAM_NAVIO; i++)
+        tabuleiro[0 + i][9 - i] = NAVIO;
+
+    // Matriz Cone (7x7) — Cone apontando para baixo
+    int cone[7][7] = {0};
+    for (int i = 0; i < 7; i++) {
+        int meio = 3;
+        for (int j = meio - i; j <= meio + i; j++) {
+            if (j >= 0 && j < 7) {
+                cone[i][j] = 1;
+            }
+        }
+    }
+
+    // Matriz Cruz (7x7)
+    int cruz[7][7] = {0};
+    for (int i = 0; i < 7; i++) {
+        cruz[i][3] = 1; // vertical
+        cruz[3][i] = 1; // horizontal
+    }
+
+    // Matriz Octaedro (7x7) — Forma de losango
+    int octaedro[7][7] = {0};
+    for (int i = 0; i < 7; i++) {
+        int meio = 3;
+        int start = meio - (i <= 3 ? i : 6 - i);
+        int end = meio + (i <= 3 ? i : 6 - i);
+        for (int j = start; j <= end; j++) {
+            octaedro[i][j] = 1;
+        }
+    }
+
+    // Aplicando habilidades ao tabuleiro
+    aplicarHabilidade(tabuleiro, cone, 4, 4, 7);       // centro do cone em (4,4)
+    aplicarHabilidade(tabuleiro, cruz, 6, 6, 7);       // centro da cruz em (6,6)
+    aplicarHabilidade(tabuleiro, octaedro, 3, 7, 7);   // centro do octaedro em (3,7)
+
+    // Exibe o resultado
+    imprimirTabuleiro(tabuleiro);
 
     return 0;
 }
